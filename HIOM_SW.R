@@ -112,7 +112,7 @@ plot.histo= function(x,min,max,xlab='')
 
 ##############
 
-scenario=1  # set scenario
+scenario=3  # set scenario
 
 # scenario 1: removed from manuscript
 # scenario 2 : figure 4
@@ -772,7 +772,7 @@ if(PNG)
   list.files(path=paste0("figures/pngplots_",scenario,"/"), pattern = '*.png', full.names = TRUE) %>% 
     image_read() %>% # reads each path file
     image_join() %>% # joins image
-    image_animate(fps=2,loop=0) %>% # animates, can opt for number of loops
+    image_animate(fps=2,loop=1) %>% # animates, can opt for number of loops
     image_write(paste0("figures/Anim_",scenario,".gif")) # write to current dir
   
 }
