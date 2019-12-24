@@ -1,15 +1,13 @@
-require(igraph)
-require(colorspace)
-require(svMisc)
+library(igraph)
+library(colorspace)
+# library(svMisc)
 library(ggplot2)
-library(Hmisc)
-library(plotrix)
+# library(Hmisc)
 library(diptest)
 library(png)
 library(qgraph)
-library(Rmisc) 
+# library(Rmisc) 
 library(tidyverse)
-
 
 hartigan_d= function(x)
 {
@@ -21,35 +19,34 @@ hartigan_d= function(x)
   return(list(dip,dipstar))
 }
 
-std.error <- function(x) sd(x)/sqrt(length(x)) 
-
 sample = function(x, size, replace = F, prob = NULL) {
   if (length(x) == 1) return(x)
   base::sample(x, size = size, replace = replace, prob = prob)
 }
 
-information_update=function(i1,i2,a1,a2,persuasion,r_min,info_update=T) # compute weighted man of information
+information_update=function(i1,i2,a1,a2,persuasion,r_min,info_update=T)
 {
   r=r_min+(1-r_min)/(1+exp(-1*persuasion*(a1-a2))) # resistance
-  inf=r*i1+(1-r)*i2
+  inf=r*i1+(1-r)*i2  # compute weighted man of information
   if(!info_update) inf=i1
   return(inf)
 }
 
-stoch_cusp=function(n,x,b,a,s_O,maxwell_convention=F) # updates opinion according to cusp
+stoch_cusp=function(N,x,b,a,s_O,maxwell_convention=F) 
 {
   dt=.01
-  x=x-dt*(x^3-b*x-a)+rnorm(n,0,s_O)
+  x=x-dt*(x^3-b*x-a)+rnorm(N,0,s_O) # updates opinion according to cusp
   if(maxwell_convention) x[x*a<0]=-x[x*a<0]
   x[is.nan(x)]=0
   x
 }
 
-make_network = function(model='SBM',n=400,clusters=10,p_within=.01,p_between=.001,rewiring=.02)
+make_network = function(model='SBM',N=400,clusters=10,p_within=.01,
+                        p_between=.001,rewiring=.02)
 {
   if(model=='WS')
   {
-    g <- gg <- sample_smallworld(1, n,  1,rewiring);  # The Watts-Strogatz small-world model
+    g <- gg <- sample_smallworld(1, N,  1,rewiring); # The Watts-Strogatz small-world model
     l <-layout_nicely(g)
     adj <- get.adjacency(g)
   }
@@ -58,14 +55,14 @@ make_network = function(model='SBM',n=400,clusters=10,p_within=.01,p_between=.00
   {
     pm=matrix(p_between,clusters,clusters);
     diag(pm)=p_within
-    g <- gg <- sample_sbm(n, pref.matrix=pm, block.sizes=rep(n/clusters,clusters))
+    g <- gg <- sample_sbm(N, pref.matrix=pm, block.sizes=rep(N/clusters,clusters))
     l <-layout_nicely(g)
     adj <- get.adjacency(g)
   }
   
   if(model=='lattice')
   {
-    g=gg=make_lattice(c(sqrt(n), sqrt(n), 1),nei=1);
+    g=gg=make_lattice(c(sqrt(N), sqrt(N), 1),nei=1);
     l = layout_on_grid(g);
     adj <- get.adjacency(g)
   }
@@ -74,7 +71,7 @@ make_network = function(model='SBM',n=400,clusters=10,p_within=.01,p_between=.00
   {  
     pm=matrix(p_between,clusters,clusters);
     diag(pm)=p_within
-    g <- gg <- sample_sbm(.5*n, pref.matrix=pm, block.sizes=rep((.5*n)/clusters,clusters))
+    g <- gg <- sample_sbm(.5*N, pref.matrix=pm, block.sizes=rep((.5*N)/clusters,clusters))
     l <-layout_nicely(g)
     g=g %du% g
     l1=l
@@ -115,12 +112,19 @@ plot.histo= function(x,min,max,xlab='')
 
 ##############
 
-scenario=1
+scenario=1  # set scenario
 
-pdfplot=F # if TRUE to plot to pdf files
+# scenario 1: removed from manuscript
+# scenario 2 : figure 4
+# scenario 3 : figure 5
+# scenario 31 : figure 6
+# scenario 4 : figure 7
+# scenario 41 : figure 8
+
+pdfplot=F # if TRUE to plot to pdf files used for manuscript figures
 
 PNG=T # save png for gif
-if(PNG) unlink(paste0("pngplots_",scenario,"/*"))
+if(PNG) unlink(paste0("figures/pngplots_",scenario,"/*"))
 
 #layout for plots
 if(scenario %in% c(1)) layout.m=layout.basis=layout(1)
@@ -130,10 +134,11 @@ if(scenario %in% c(1)) heights=heights.basis=1
 if(scenario %in% c(2,3,31)) heights=heights.basis=c(4,1)
 if(scenario %in% c(4,41)) heights=heights.basis=c(1,1)
 
-if(scenario>30) simulation=T else simulation=F 
+if(scenario>30) simulation=T else simulation=F # simulation runbs oer conbination of parameter settings
 
 if(simulation) {plotting=F} else{plotting=T;sim_values=sim_values2=1;sim_values3='SBM'}  
 
+#simulation settings
 if(scenario==31) {sim_values=rep(seq(0,.4,by=.05),each=5);sim_var=c('d_A');
 sim_values2=rep(seq(.0,1,by=.1),each=5);sim_var2=c('r_min')
 sim_values3=c(1,2);sim_var3=c('network')}
@@ -141,10 +146,12 @@ if(scenario==41) {sim_values=rep(seq(0,.002,by=.0005),each=5);sim_var=c('p(pertu
 sim_values2=rep(seq(0,.5,by=.1),each=5);sim_var2=c('t_d')
 sim_values3=c(1,2);sim_var3=c('network')}
 
-datasim=matrix(NA,length(sim_values)*length(sim_values2)*length(sim_values3),7)
+
+datasim=matrix(NA,length(sim_values)*length(sim_values2)*length(sim_values3),7) # data storage simulations
 sim_i=0 #counter in simulation loop
 
-for(sim_value in sim_values)
+## simulation loop ; not used in scenario 1,2,3,4
+for(sim_value in sim_values) 
 {
   for(sim_value2 in sim_values2)
   {
@@ -156,20 +163,17 @@ for(sim_value in sim_values)
       if(scenario==1) #the cusp of cusp; removed from manuscript
       {
         Ni= 5000 # max iterations
-        
         if(pdfplot)
         { 
           set.seed(1);
-          pdfname=paste('CAcusp_rev_s',scenario,'.pdf',collapse='',sep='')
+          pdfname=paste('figures/cuspofcusps',scenario,'.pdf',collapse='',sep='')
           pdf(pdfname,h=8,w=11);
           plot_iteration=c(1,(1/10)*Ni,Ni)
           layout.m=matrix(1:3,3,1)
         }
         
-        
-        
         n1=200;n2=200  # dimensions of lattice
-        n=n1*n2
+        N=n1*n2
         lattice=T
         g=make_lattice(c(n1, n2, 1),nei=1);l = layout_on_grid(g); # lattice
         
@@ -184,7 +188,7 @@ for(sim_value in sim_values)
         attention_star=1
         min_attention=-.5 # to include continuous change in O as function of K
         delta_attention=0 # increase in attention when interacting
-        decay_attention=delta_attention/(attention_star*(n^2))
+        decay_attention=delta_attention/(attention_star*(N^2))
         deffuant_c=Inf
         
         # initial values for A and I
@@ -193,24 +197,25 @@ for(sim_value in sim_values)
         i_init_max=1
         information=rep(seq(-1*k_init,k_init,length=n1),each=n2)
         attention=rep(seq(i_init_min,i_init_max,length=n1),n2)
-        opinion=rnorm(n,0,.3)
+        opinion=rnorm(N,0,.3)
       }
       
       if(scenario==2)
       {
-        Ni=15000# 5000 # max iterations
+        Ni=15000 # max iterations
         if(pdfplot)
         { 
           set.seed(1);
-          pdfname=paste('CAcusp_rev_s',scenario,'.pdf',collapse='',sep='')
+          pdfname='figures/figure4.pdf'
           pdf(pdfname,h=8,w=11);
-          layout.m=cbind(layout.basis,layout.basis+4*(layout.basis>0));layout.m=rbind(layout.m,layout.m+8*(layout.m>0))
+          layout.m=cbind(layout.basis,layout.basis+4*(layout.basis>0));
+          layout.m=rbind(layout.m,layout.m+8*(layout.m>0))
           heights=c(3,1,3,1)
           plot_iteration=c(1,(1/3)*Ni,(2/3)*Ni,Ni)
         }
         
-        n=400
-        network=make_network(model='WS',n=n,clusters=10,p_within=.2,p_between=.001,rewiring=.02)
+        N=400
+        network=make_network(model='WS',N=N,clusters=10,p_within=.2,p_between=.001,rewiring=.02)
         g=network[[1]];l=network[[2]];adj=network[[3]]
         
         sd_noise_information=.0005
@@ -224,34 +229,33 @@ for(sim_value in sim_values)
         attention_star=1
         min_attention=-.5
         delta_attention=0
-        decay_attention=delta_attention/(attention_star*(n^2))
+        decay_attention=delta_attention/(attention_star*(N^2))
         deffuant_c=Inf
         
         # all slighty positive low attention
-        information = rnorm(n, 0, .3)
-        attention = runif(n, 1, 1)
-        opinion=rnorm(n,0,.2)
+        information = rnorm(N, 0, .3)
+        attention = runif(N, 1, 1)
+        opinion=rnorm(N,0,.2)
         
-        # setup pdf files
       }
       
       if(scenario==3)
       {
-        Ni= 25000# 20000 # max iterations
-        
+        Ni= 25000 # max iterations
         if(pdfplot) 
         {
           set.seed(1);
-          pdfname=paste('CAcusp_rev_s',scenario,'.pdf',collapse='',sep='')
+          pdfname='figures/figure5.pdf'
           pdf(pdfname,paper='a4r',h=8,w=11);
-          layout.m=cbind(layout.basis,layout.basis+4*(layout.basis>0));layout.m=rbind(layout.m,layout.m+8*(layout.m>0))
+          layout.m=cbind(layout.basis,layout.basis+4*(layout.basis>0));
+          layout.m=rbind(layout.m,layout.m+8*(layout.m>0))
           layout.m[3:4,9:16]=13
           heights=c(3,1,3,1)
           plot_iteration=c(600,3000,Ni)
         }
         
-        n=400
-        network=make_network('SBM',n=n,clusters=10,p_within=.2,p_between=.001,rewiring=.02)
+        N=400
+        network=make_network('SBM',N=N,clusters=10,p_within=.2,p_between=.001,rewiring=.02)
         g=network[[1]];l=network[[2]];adj=network[[3]]
         
         info_update=T
@@ -265,18 +269,19 @@ for(sim_value in sim_values)
         attention_star=1
         min_attention=-.5 # to include continuous change in O as function of K
         delta_attention=0.1
-        decay_attention=delta_attention/(attention_star*(n^2))
+        decay_attention=delta_attention/(attention_star*(N^2))
         deffuant_c=Inf
         
         # all slighty positive low attention
-        information = rnorm(n, .1, 0)
-        attention = runif(n, .0, .0)
-        opinion=rnorm(n,0,.01)
-        for( i in 1:500) opinion=stoch_cusp(n,opinion,attention+min_attention,information,s_O,maxwell_convention)
+        information = rnorm(N, .1, 0)
+        attention = runif(N, .0, .0)
+        opinion=rnorm(N,0,.01)
+        for( i in 1:500) opinion=stoch_cusp(N,opinion,attention+min_attention,
+                                            information,s_O,maxwell_convention)
         
         # except for some negative high attention persons (activists)
-        m=rep(0,n)
-        m[seq(1,n,n/3)[-1]-1]=1
+        m=rep(0,N)
+        m[seq(1,N,N/3)[-1]-1]=1
         information_activists=-.5
         attention_activists=1
         opinion_activists=-.5
@@ -286,11 +291,11 @@ for(sim_value in sim_values)
       
       if(scenario %in% c(31))
       {
-        n=400
+        N=400
         network_sim=c('SBM','lattice')
-        network=make_network(network_sim[sim_value3],n=n,clusters=10,p_within=.2,p_between=.001,rewiring=.02)
+        network=make_network(network_sim[sim_value3],N=N,clusters=10,
+                             p_within=.2,p_between=.001,rewiring=.02)
         g=network[[1]];l=network[[2]];adj=network[[3]]
-        
         
         info_update=T
         Ni= 25000# 5000 # max iterations
@@ -304,7 +309,7 @@ for(sim_value in sim_values)
         attention_star=1
         min_attention=-.5 # to include continuous change in O as function of K
         delta_attention=0.1
-        decay_attention=delta_attention/(attention_star*(n^2))
+        decay_attention=delta_attention/(attention_star*(N^2))
         deffuant_c=Inf
         
         delta_attention= sim_value
@@ -312,14 +317,15 @@ for(sim_value in sim_values)
         
         
         # all slighty positive low attention
-        information = rnorm(n, .1, 0)
-        attention = runif(n, .0, .0)
-        opinion=rnorm(n,0,.01)
-        for( i in 1:500) opinion=stoch_cusp(n,opinion,attention+min_attention,information,s_O,maxwell_convention)
+        information = rnorm(N, .1, 0)
+        attention = runif(N, .0, .0)
+        opinion=rnorm(N,0,.01)
+        for( i in 1:500) opinion=stoch_cusp(N,opinion,attention+min_attention,
+                                            information,s_O,maxwell_convention)
         
         # except for some negative high attention persons (activists)
-        m=rep(0,n)
-        m[seq(1,n,n/3)[-1]-1]=1
+        m=rep(0,N)
+        m[seq(1,N,N/3)[-1]-1]=1
         information_activists=-.5
         attention_activists=1
         opinion_activists=-.5
@@ -334,14 +340,14 @@ for(sim_value in sim_values)
         if(pdfplot) 
         {
           set.seed(3);
-          pdfname=paste('CAcusp_rev_s',scenario,'.pdf',collapse='',sep='')
+          pdfname='figures/figure7.pdf'
           pdf(pdfname,h=8,w=11,paper='a4r'); 
           layout.m=layout.m=cbind(layout.m,layout.m+5)
           plot_iteration=c(1,Ni) 
         }
         
-        n=800
-        network=make_network('SBM_4',n=n,clusters=10,p_within=.2,p_between=.001)
+        N=800
+        network=make_network('SBM_4',N=N,clusters=10,p_within=.2,p_between=.001)
         g=network[[1]];l=network[[2]];adj=network[[3]];gg=network[[4]]
         
         lattice=F
@@ -359,27 +365,23 @@ for(sim_value in sim_values)
         p_pertubation=0.0005 # probability of inserting meat-eating vegatarians
         maxwell_convention=F
         
-        information=sample(c(.1,-.4),n,T,prob=c(.8,.2))
-        attention=rep(1,n)
+        information=sample(c(.1,-.4),N,T,prob=c(.8,.2))
+        attention=rep(1,N)
         attention[information>0]=0.1
-        opinion=rnorm(n,0,.01)
+        opinion=rnorm(N,0,.01)
         
-        information[(.5*n+1):n]=information[1:(.5*n)]
-        attention[(.5*n+1):n]=attention[1:(.5*n)]
-        opinion[(.5*n+1):n]=opinion[1:(.5*n)]
-        
-        for( i in 1:500) opinion=stoch_cusp(n,opinion,attention+min_attention,information,s_O,maxwell_convention)
-        
-        
-        
+        information[(.5*N+1):N]=information[1:(.5*N)]
+        attention[(.5*N+1):N]=attention[1:(.5*N)]
+        opinion[(.5*N+1):N]=opinion[1:(.5*N)]
+        for( i in 1:500) opinion=stoch_cusp(N,opinion,attention+min_attention,
+                                            information,s_O,maxwell_convention)
       }
       
       if(scenario==41) # Meat eating veggies
       {
-        
-        n=400
-        network=make_network('SBM',n=n,clusters=10,p_within=.2,p_between=.001)
-        # network=make_network('lattice',n=n,clusters=10,p_within=.2,p_between=.001)
+        N=400
+        network=make_network('SBM',N=N,clusters=10,p_within=.2,p_between=.001)
+        # network=make_network('lattice',N=N,clusters=10,p_within=.2,p_between=.001)
         g=network[[1]];l=network[[2]];adj=network[[3]];gg=network[[4]]
         
         lattice=F
@@ -400,18 +402,19 @@ for(sim_value in sim_values)
         p_pertubation= sim_value
         deffuant_c= sim_value2
         
-        
-        information=sample(c(.1,-.4),n,T,prob=c(.8,.2))
-        attention=rep(1,n)
+        information=sample(c(.1,-.4),N,T,prob=c(.8,.2))
+        attention=rep(1,N)
         attention[information>0]=0.1
-        opinion=rnorm(n,0,.01)
-        for( i in 1:500) opinion=stoch_cusp(n,opinion,attention+min_attention,information,s_O,maxwell_convention)
+        opinion=rnorm(N,0,.01)
+        for( i in 1:500) opinion=stoch_cusp(N,opinion,attention+min_attention,
+                                            information,s_O,maxwell_convention)
       }
       
+      # plot and write settings
       if(!pdfplot & !simulation & !PNG){layout(matrix(1:1,1,1));plot_iteration=seq(0,Ni,1000)}
-      if(PNG &scenario %in% c(1,3)) plot_iteration=c(seq(1,1000,100),seq(1000,.5*Ni,500),seq(.5*Ni,Ni,1000))
-      if(PNG & scenario==2) plot_iteration=c(seq(1,Ni,500))
-      if(PNG &scenario %in% c(1,3,4)) plot_iteration=c(seq(1,1000,200),seq(1000,.5*Ni,1000),seq(.5*Ni,Ni,2000))
+      if(PNG &scenario %in% c(1,2)) plot_iteration=c(seq(1,Ni,500))
+      if(PNG &scenario %in% c(3,4)) plot_iteration=c(seq(1,1000,200),
+                                                       seq(1000,.5*Ni,1000),seq(.5*Ni,Ni,2000))
       
       
       #remember initial values
@@ -421,8 +424,8 @@ for(sim_value in sim_values)
       
       # make neighbor matrix for fast sampling neighbors in loop
       max_neighb=max(degree(g))
-      m_neigh=matrix(NA,n,max_neighb)
-      for(i in 1:n)
+      m_neigh=matrix(NA,N,max_neighb)
+      for(i in 1:N)
       {
         nb=as.numeric(neighbors(g, i, mode = c("all"))[[]])
         lengt_nb=length(nb)
@@ -444,27 +447,24 @@ for(sim_value in sim_values)
         if(iteration%%1000==0 & !simulation) print(iteration)
         
         # introduce activista in scenario 3 and 31 after activism_on_at_iteration interations
-        if(scenario %in% c(3,31)) if(iteration == activism_on_at_iteration) # black pete opposition on
+        if(scenario %in% c(3,31)) if(iteration == activism_on_at_iteration) 
         {information[m == 1] = information_activists
         attention[m == 1] = attention_activists
         opinion[m == 1] = opinion_activists
         }
         
         #sample agent
-        if(max(attention)==0) agent=0 else agent=sample(1:n,1,prob=attention)
+        if(max(attention)==0) agent=0 else agent=sample(1:N,1,prob=attention)
         
         #sample partner
-        if(agent!=0 & scenario!=6) 
+        if(agent!=0) 
         {
           neighb=m_neigh[agent,][!is.na(m_neigh[agent,])]
           if(length(neighb>0))  partner=sample(neighb,1) else partner=0
         } else partner=0
-        if(agent!=0 & scenario==6) partner=sample(1:n,1) # in scenario 6 all agents are connected
-        
         
         if(iteration>1) # exclude first iteration from updating to get a plot of initial state
         {
-          
           ### information update for interacting agents
           if(partner!=0&agent!=0 ) 
           {
@@ -486,43 +486,46 @@ for(sim_value in sim_values)
           }
           
           ### attention decay for all agents
-          information=information+rnorm(n,0,sd_noise_information)
-          attention=attention-2*delta_attention*attention/n   # correction 2 times if interaction
+          information=information+rnorm(N,0,sd_noise_information)
+          attention=attention-2*delta_attention*attention/N   # correction 2 times if interaction
           
-          
-          if(scenario==2) if(iteration>(1/3)*Ni) {information=.999*information;sd_noise_information=0}  # schrinking I in scenario 1
-          if(scenario==2) if(iteration>(2/3)*Ni) {attention=.999*attention;delta_attention=0} # schrinking A in scenario 1
+          # scenario 2 schrinking
+          if(scenario==2) if(iteration>(1/3)*Ni) {information=.999*information;
+                                          sd_noise_information=0}  # schrinking I in scenario 1
+          if(scenario==2) if(iteration>(2/3)*Ni) {attention=.999*attention;
+                                          delta_attention=0} # schrinking A in scenario 1
           
           ###  behavior update
-          opinion=stoch_cusp(n,opinion,attention+min_attention,information,s_O,maxwell_convention)
+          opinion=stoch_cusp(N,opinion,attention+min_attention,information,s_O,maxwell_convention)
           
-          if(scenario==4) # introducing meat eating vegatations in scenario 4
+          # introducing meat eating vegatations in scenario 4
+          if(scenario==4) 
           {
-            perturb_vector=sample(c(F,T),n,T,prob=c(1-p_pertubation,p_pertubation))
-            opinion[opinion<0 & perturb_vector & rep(c(T,F),each=.5*n)] = -1*opinion[opinion<0 & perturb_vector & rep(c(T,F),each=.5*n)]
+            perturb_vector=sample(c(F,T),N,T,prob=c(1-p_pertubation,p_pertubation))
+            opinion[opinion<0 & perturb_vector & rep(c(T,F),each=.5*N)] = -1*opinion[opinion<0 & 
+                                                            perturb_vector & rep(c(T,F),each=.5*N)]
           }
-          
           
           if(scenario==41) # introducing meat eating vegatations in scenario 4
           {
-            perturb_vector=sample(c(F,T),n,T,prob=c(1-p_pertubation,p_pertubation))
+            perturb_vector=sample(c(F,T),N,T,prob=c(1-p_pertubation,p_pertubation))
             opinion[opinion<0 & perturb_vector] = -1*opinion[opinion<0 & perturb_vector]
           }
-          
         }
         
         # reports
         if(partner!=0&agent!=0 & iteration %% 200==0 & !simulation)  
         {
-          CD=27*information^2-4*(attention+min_attention)^3
-          CD_p=sum(CD<0)/n
-          freq_pos_opinion=sum(opinion>0)/n
+          CD=27*information^2-4*(attention+min_attention)^3 # Cardan's discriminant
+          CD_p=sum(CD<0)/N
+          freq_pos_opinion=sum(opinion>0)/N  # p(O>0)
           assortativity_g=assortativity(g,opinion)
           ambivalence_r=cor(opinion,information)
           dip=dip(opinion)
           
-          data[iteration/200,]=c(agent,partner,O1,O2,I1,I2,A1,A2,opinion[agent],opinion[partner],information[agent],
-                                 information[partner],attention[agent],attention[partner],
+          data[iteration/200,]=c(agent,partner,O1,O2,I1,I2,A1,A2,opinion[agent],opinion[partner],
+                                 information[agent], information[partner],attention[agent],
+                                 attention[partner],
                                  CD_p,ambivalence_r,freq_pos_opinion,
                                  assortativity_g,dip,mean(opinion),sd(opinion),mean(information),
                                  sd(information),mean(attention),sd(attention))
@@ -531,25 +534,26 @@ for(sim_value in sim_values)
         if(partner!=0&agent!=0 & iteration > (Ni-21) & simulation)  
         {
           CD=27*information^2-4*(attention+min_attention)^3
-          CD_p=sum(CD<0)/n
-          freq_pos_opinion=sum(opinion>0)/n
+          CD_p=sum(CD<0)/N
+          freq_pos_opinion=sum(opinion>0)/N
           assortativity_g=assortativity(g,opinion)
           ambivalence_r=cor(opinion,information)
           dip=dip(opinion)
           
-          data[iteration-(Ni-20),]=c(agent,partner,O1,O2,I1,I2,A1,A2,opinion[agent],opinion[partner],information[agent],
+          data[iteration-(Ni-20),]=c(agent,partner,O1,O2,I1,I2,A1,A2,opinion[agent],
+                                     opinion[partner],information[agent],
                                      information[partner],attention[agent],attention[partner],
                                      CD_p,ambivalence_r,freq_pos_opinion,
                                      assortativity_g,dip,mean(opinion),sd(opinion),mean(information),
                                      sd(information),mean(attention),sd(attention))
         }
         
-        
         ###### Plotting
         if(plotting)
         {
           if(PNG) {
-            png(paste0("pngplots_",scenario,"/",scenario,"_",100000+iteration,".png"),width=8,height=5,units="in",res=200)
+            png(paste0("figures/pngplots_",scenario,"/",scenario,"_",100000+iteration,".png"),
+                            width=8,height=5,units="in",res=200)
             layout(layout.m,heights=heights)
           }
           
@@ -562,7 +566,7 @@ for(sim_value in sim_values)
             CD=27*information^2-4*(attention+min_attention)^3
             assortativity_g=assortativity(g,opinion)
             
-            shape=rep("circle",n)
+            shape=rep("circle",N)
             if(pdfplot)c.title=1.1  else c.title=1.5
             title=sub_H=sub_A=""
             if(scenario==2 )
@@ -581,7 +585,7 @@ for(sim_value in sim_values)
             if(scenario==3 )
             {
               h_d=hartigan_d(opinion)
-              title=paste('p(O>0) =',round(sum(opinion>0)/n,2),'\nsd(O) =',round(sd(opinion),2))
+              title=paste('p(O>0) =',round(sum(opinion>0)/N,2),'\nsd(O) =',round(sd(opinion),2))
               shape[m==1]='star'
               sub_H=paste('\nHartigan D = ',round(h_d[[1]],2),h_d[[2]],sep="",col="")
               sub_A=paste("\nAssortativity =",round(assortativity_g,2))
@@ -598,34 +602,36 @@ for(sim_value in sim_values)
             
             if(scenario==4){
               
-              h_d=hartigan_d(opinion[(1+(n/2)):n])
-              title=paste('p(O>0) =',round(sum(opinion[(1+(n/2)):n]>0)/(.5*n),2),'\nsd(O) =',round(sd(opinion[(1+(n/2)):n]),2))
+              h_d=hartigan_d(opinion[(1+(N/2)):N])
+              title=paste('p(O>0) =',round(sum(opinion[(1+(N/2)):N]>0)/(.5*N),2),
+                          '\nsd(O) =',round(sd(opinion[(1+(N/2)):N]),2))
               sub_H=paste('\nHartigan D = ',round(h_d[[1]],2),h_d[[2]],sep="",col="")
-              sub_A=paste("\nAssortativity =",round(assortativity( gg,opinion[(1+(n/2)):n]),2))
+              sub_A=paste("\nAssortativity =",round(assortativity( gg,opinion[(1+(N/2)):N]),2))
               sub1=paste(title,sub_H,sub_A)
               
-              h_d=hartigan_d(opinion[1:(n/2)])
-              sub=paste('p(O>0) =',round(sum(opinion[1:(n/2)]>0)/(.5*n),2),'\nsd(O) =',round(sd(opinion[1:(n/2)]),2))
+              h_d=hartigan_d(opinion[1:(N/2)])
+              sub=paste('p(O>0) =',round(sum(opinion[1:(N/2)]>0)/(.5*N),2),
+                        '\nsd(O) =',round(sd(opinion[1:(N/2)]),2))
               sub_H=paste('\nHartigan D = ',round(h_d[[1]],2),h_d[[2]],sep="",col="")
-              sub_A=paste("\nAssortativity =",round(assortativity(gg,opinion[1:(n/2)]),2))
+              sub_A=paste("\nAssortativity =",round(assortativity(gg,opinion[1:(N/2)]),2))
               sub=paste(sub,sub_H,sub_A)
               
               plot.graph(adj,l,opin,inform,atten,CD,title="",shape,c.title)
               par(mar=c(0,0,0,0))
-              plot(c(0,1),c(0,1),type='n',axes=FALSE,ann=FALSE)
+              plot(c(0,1),c(0,1),type='N',axes=FALSE,ann=FALSE)
               text(0,.3,sub1,cex=.9,pos=4,family='mono')
-              plot.histo(-opin[(1+(n/2)):n],min.o,max.o,'O')
+              plot.histo(-opin[(1+(N/2)):N],min.o,max.o,'O')
               par(mar=c(0,0,0,0))
-              plot(c(0,1),c(0,1),type='n',axes=FALSE,ann=FALSE)
+              plot(c(0,1),c(0,1),type='N',axes=FALSE,ann=FALSE)
               text(0,.3,sub,cex=.9,pos=4,family='mono')
-              plot.histo(-opin[1:(n/2)],min.o,max.o,'O')
+              plot.histo(-opin[1:(N/2)],min.o,max.o,'O')
             }  
             
             if(scenario==1 )
             {
-              #image(opinioni,axes=F,col = heat.colors(256),breaks=seq(-2,2,le=257),xlab='I', ylab='K(init)')
               opin_m=matrix(opin,n1,n2)
-              image(opin_m,axes=F,col = diverging_hsv(256,s=1.6,v=1),breaks=seq(-1.5,1.5,le=257),xlab='A', ylab='I(init)')
+              image(opin_m,axes=F,col = diverging_hsv(256,s=1.6,v=1),
+                    breaks=seq(-1.5,1.5,le=257),xlab='A', ylab='I(init)')
               axis(1,seq(0,1,length=6),seq(i_init_min,i_init_max,by=.1))
               axis(2,seq(0,1,by=.25),seq(-1*k_init,k_init,length=5))
               scale_factor= (i_init_max-i_init_min)/(2*k_init)
@@ -634,7 +640,6 @@ for(sim_value in sim_values)
               bf2=function(b) .5-1*scale_factor*(2 * (b+min_attention+i_init_min)^(3/2))/(3 *3^(1/2))
               plot(bf2,0,1,ylab='b',add=T)
             }
-            
           }      
           if(PNG) dev.off()
         }
@@ -654,7 +659,8 @@ for(sim_value in sim_values)
       if(pdfplot) dev.off()
       
       datad=as.data.frame(data)
-      names(datad)=c('agent','partner','o1o','o2o','i1o','i2o','a1o','a2o','o1n','o2n','i1n','i2n','a1n','a2n','CD',
+      names(datad)=c('agent','partner','o1o','o2o','i1o','i2o','a1o','a2o','o1n',
+                     'o2n','i1n','i2n','a1n','a2n','CD',
                      'ambivalence_r','freq_pos_opinion','assortativity','dip','mean_o','sd_o',
                      'mean_i','sd_i','mean_a','sd_a')
       
@@ -666,7 +672,7 @@ for(sim_value in sim_values)
 
 if(scenario==31)
 {
-  
+  save(datasim,file='datasim_sc31')
   mean_sim=as.matrix(aggregate(datasim[,4:7],list(datasim[,1],datasim[,2],datasim[,3]),mean,na.rm=T))
   colnames(mean_sim)=c(sim_var,sim_var2,sim_var3,c('p(O>0)','SD(O)','Hartigan D','Assortativity'))
   mean_sim2=as_tibble(mean_sim)
@@ -674,16 +680,11 @@ if(scenario==31)
   mean_sim2$network[mean_sim2$network==1]='Stoch. block model'
   mean_sim2$network[mean_sim2$network==2]='Lattice network'
   mean_sim2$network=factor(mean_sim2$network, levels=c('Stoch. block model','Lattice network'))
-  
   mean_sim3 = mean_sim2 %>%
     gather('p(O>0)','Hartigan D', key = measure, value = value)
-  
   mean_sim3$measure=factor(mean_sim3$measure, levels=c('p(O>0)','Hartigan D'))
   
-  
-  #save(datasim,file='datasim_sc31')
-  pdf('CAcusp_rev_s31.pdf')
-  
+  pdf('figures/figure6.pdf')
   ggplot(data = mean_sim3) + 
     geom_point(mapping = aes(x = d_A, y = value,color = r_min),size=1.2)+
     geom_line(mapping = aes(x = d_A, y = value,color = r_min),size=.5)+
@@ -706,15 +707,12 @@ if(scenario==31)
     theme(strip.text.x = element_text(size = 12))+
     theme(strip.text.x = element_text(margin = margin(1, 0, 1, 0)))+
     labs(color = expression('r'['min']))
-  
-  
   dev.off()
-  
 }
 
 if(scenario==41)
 {
-  
+  save(datasim,file='datasim_sc41')
   mean_sim=as.matrix(aggregate(datasim[,4:7],list(datasim[,1],datasim[,2],datasim[,3]),mean,na.rm=T))
   colnames(mean_sim)=c('p_perturbation',sim_var2,sim_var3,c('p(O>0)','SD(O)','Hartigan D','Assortativity'))
   mean_sim2=as_tibble(mean_sim)
@@ -726,14 +724,9 @@ if(scenario==41)
   mean_sim3 = mean_sim2 %>%
     gather('p(O>0)','Hartigan D', key = measure, value = value)
   mean_sim3$measure=factor(mean_sim3$measure, levels=c('p(O>0)','Hartigan D'))
-  
-  
-  #  save(datasim,file='datasim_sc41')
-  pdf('CAcusp_rev_s41.pdf')
-  
-  
+
+  pdf('figures/figure8.pdf')
   scaleFUN <- function(x) sprintf("%.4f", x)
-  
   ggplot(data = mean_sim3) + 
     geom_point(mapping = aes(x = p_perturbation, y = value,color = t_d),size=1.2)+
     geom_line(mapping = aes(x = p_perturbation, y = value,color = t_d),size=.5)+
@@ -755,8 +748,6 @@ if(scenario==41)
     theme(strip.text.x = element_text(size = 14))+
     theme(strip.text.x = element_text(margin = margin(1, 0, 1, 0)))+
     labs(color = expression('t'['O']))
-  
-  
   dev.off()
   
 }
@@ -765,8 +756,10 @@ layout(1:3)
 hist(opinion,20,col='grey');hist(information,20,col='grey');hist(attention,20,col='grey')
 
 layout(1)
-matplot(datad[,c('CD','freq_pos_opinion','assortativity','ambivalence_r')],type='l',bty='n',xlab='x 100',ylab="value",axes=F,col=1:4,lty=1:4)
-legend('topright',col=1:7,lty=1:7,legend=c('in bifurcation set','ambivalence','freq_pos_opinion','assortativity','ambivalence_r'),bty='n')
+matplot(datad[,c('CD','freq_pos_opinion','assortativity','ambivalence_r')],
+        type='l',bty='n',xlab='x 100',ylab="value",axes=F,col=1:4,lty=1:4)
+legend('topright',col=1:7,lty=1:7,legend=c('in bifurcation set','ambivalence',
+        'freq_pos_opinion','assortativity','ambivalence_r'),bty='n')
 axis(2)
 axis(1)
 
@@ -776,11 +769,11 @@ if(PNG)
   library(purrr) 
   library(magick)
   
-  list.files(path=paste0("pngplots_",scenario,"/"), pattern = '*.png', full.names = TRUE) %>% 
+  list.files(path=paste0("figures/pngplots_",scenario,"/"), pattern = '*.png', full.names = TRUE) %>% 
     image_read() %>% # reads each path file
     image_join() %>% # joins image
     image_animate(fps=2,loop=0) %>% # animates, can opt for number of loops
-    image_write(paste0("Anim_",scenario,".gif")) # write to current dir
+    image_write(paste0("figures/Anim_",scenario,".gif")) # write to current dir
   
 }
 
@@ -788,7 +781,8 @@ if(PNG)
 # library(plotly)
 # 
 # plot_ly(x = ~as.vector(information), y = ~as.vector(attention), z = ~as.vector(opinion),
-#              marker = list(size=1+attention*4,color = ~as.vector(-opinion), colorscale = c('#FF0000FF', '#FFFFFDFF'), showscale = TRUE)) %>%
+#              marker = list(size=1+attention*4,color = ~as.vector(-opinion), 
+#              colorscale = c('#FF0000FF', '#FFFFFDFF'), showscale = TRUE)) %>%
 #   add_markers() %>%
 #   layout(scene = list(xaxis = list(title = 'Information'),
 #                       yaxis = list(title = 'Attention'),

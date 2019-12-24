@@ -27,7 +27,7 @@ for (j in 1:iterations)
   list(x,w)
 }
 
-pdf('meanfield.pdf')
+pdf('figures/figureA1.pdf')
 
 # Simulation
 
@@ -128,7 +128,7 @@ x=sample(c(-1,1),n,T)
 data[i]=sum(glauber(n,beta,t,w,x,iterations)[[1]])
 }
 if(pl==6) xlab='A' else xlab=''
-plot(data~betas,type='p',xlab=xlab,ylab=expression(sum(X)),bty='n')
+plot(data~betas,type='p',xlab=xlab,ylab=expression(sum(X)),bty='n',pch=20)
 
 data=rep(0,m)
 i=0
@@ -145,7 +145,7 @@ for(t_common in tau)
 }
 
 if(pl==6) xlab="I" else xlab=''
-plot(data~tau,type='p',xlab=xlab,ylab=expression(sum(X)),bty='n')
+plot(data~tau,type='p',xlab=xlab,ylab=expression(sum(X)),bty='n',pch=20)
 }
 dev.off()
 
