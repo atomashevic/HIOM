@@ -76,14 +76,13 @@ make_network = function(model='SBM',N=400,clusters=10,p_within=.01,
     g=g %du% g
     l1=l
     l1[,1]=l1[,1]
-    l1[,2]=l1[,2]+45 
+    l1[,2]=l1[,2]+36 
     l=rbind(l,l1)
     adj <- get.adjacency(g)
   }
   
   return(list(g,l,adj,gg))
 }
-
 
 plot.graph = function(adj,l,opin,inform,atten,CD,title="",shape='circle',c.title=1.5)
 {
@@ -94,10 +93,12 @@ plot.graph = function(adj,l,opin,inform,atten,CD,title="",shape='circle',c.title
   border.w=rep(1,length(opin))
   border.w[opin*inform>=0| CD>0]=.5
   par(mar=c(0,0,0,0))
+  if(scenario %in% c(2,3)) par(mar=c(1,2,3,4))
+  plot(range(l[,1]),range(l[,2]),type = "n", bty = "n", axes = FALSE)
   
   qgraph(adj, layout = l, vsize = 0.4 * (2+3*atten), labels = FALSE, color=vertex.c,
          shape = shape, esize = 0.5, edge.color = rgb(0.5,0.5,0.5, 0.5),border.color=vertex.border.c,
-         border.width = border.w, plot = T, rescale = T,title=title,title.cex=c.title)
+         border.width = border.w, plot = F, rescale = F,title=title,title.cex=c.title)
   par(mar=c(5,4,4,2));
 }
 
@@ -105,7 +106,7 @@ plot.histo= function(x,min,max,xlab='')
 {
   hist.c=rev(diverging_hsv(40,s=2,v=1))
   par(mar=c(3,0,0,0));par(mgp = c(1, 0, 0))
-  hist(x,main='',xlab=xlab,ylab='',breaks=seq(min,max,le=40),col=hist.c,cex.lab=1.1,axes=F);
+  hist(x,main='',xlab=xlab,ylab='',breaks=seq(min,max,le=40),col=hist.c,cex.lab=1.1,axes=F,freq=F);
   axis(1,at=0,labels = '')
   par(mar=c(5,4,4,2));par(mgp = c(3, 1, 0))
 }
@@ -241,10 +242,10 @@ for(sim_value in sim_values)
       
       if(scenario==3)
       {
-        Ni= 25000 # max iterations
+        Ni= 15000 #25000 # max iterations
         if(pdfplot) 
         {
-          set.seed(1);
+          set.seed(12);
           pdfname='figures/figure5.pdf'
           pdf(pdfname,paper='a4r',h=8,w=11);
           layout.m=cbind(layout.basis,layout.basis+4*(layout.basis>0));
@@ -255,7 +256,8 @@ for(sim_value in sim_values)
         }
         
         N=400
-        network=make_network('SBM',N=N,clusters=10,p_within=.2,p_between=.001,rewiring=.02)
+        social_network='SBM'
+        network=make_network(social_network,N=N,clusters=10,p_within=.2,p_between=.001,rewiring=.02)
         g=network[[1]];l=network[[2]];adj=network[[3]]
         
         info_update=T
@@ -411,10 +413,10 @@ for(sim_value in sim_values)
       }
       
       # plot and write settings
-      if(!pdfplot & !simulation & !PNG){layout(matrix(1:1,1,1));plot_iteration=seq(0,Ni,1000)}
+      if(!pdfplot & !simulation & !PNG){layout(matrix(1:1,1,1));plot_iteration=seq(0,Ni,2000)}
       if(PNG &scenario %in% c(1,2)) plot_iteration=c(seq(1,Ni,500))
       if(PNG &scenario %in% c(3,4)) plot_iteration=c(seq(1,1000,200),
-                                                       seq(1000,.5*Ni,1000),seq(.5*Ni,Ni,2000))
+                                                       seq(1000,.5*Ni,500),seq(.5*Ni,Ni,1000))
       
       
       #remember initial values
@@ -567,19 +569,18 @@ for(sim_value in sim_values)
             assortativity_g=assortativity(g,opinion)
             
             shape=rep("circle",N)
-            if(pdfplot)c.title=1.1  else c.title=1.5
+            if(pdfplot)c.title=1.5  else c.title=1.5
             title=sub_H=sub_A=""
             if(scenario==2 )
             {
               h_d=hartigan_d(opinion)
-              if (iteration >= 1) title = "Initial state"
-              if (iteration >= (1/3)*Ni) title = "All A = 1, I varies"
-              if (iteration >= (2/3)*Ni) title= "A = 1, I = 0"
-              if (iteration == Ni) title = "A = 0, I = 0"
+              if (iteration >= 1) title = "1: Initial state"
+              if (iteration >= (1/3)*Ni) title = "2: A = 1, I varies"
+              if (iteration >= (2/3)*Ni) title= "3: A = 1, I = 0"
+              if (iteration == Ni) title = "4: A = 0, I = 0"
               sub_H=paste('\nHartigan D = ',round(h_d[[1]],2),h_d[[2]],sep="",col="")
               sub_A=paste("\nAssortativity =",round(assortativity_g,2))
-              title=paste(title,sub_H,sub_A)
-              sub=""
+              sub=paste(sub_H,sub_A)
             }
             
             if(scenario==3 )
@@ -589,16 +590,21 @@ for(sim_value in sim_values)
               shape[m==1]='star'
               sub_H=paste('\nHartigan D = ',round(h_d[[1]],2),h_d[[2]],sep="",col="")
               sub_A=paste("\nAssortativity =",round(assortativity_g,2))
-              title=paste(title,sub_H,sub_A)
+              sub=paste(title,sub_H,sub_A)
+              title=""
+              
             }
             
             if(scenario %in% c(2,3)) 
             {
               plot.graph(adj,l,opin,inform,atten,CD,title,shape,c.title)
+              if(scenario==3) text(14,-14,sub,cex=1.2,pos=4,xpd=NA)
+              
               plot.histo(-opin,min.o,max.o,'O')
               plot.histo(-inform,min.i,max.i,'I')
               plot.histo(atten, min.a,max.a,'A')
             }
+            if(scenario==2) text(.9,32,sub,cex=1.2,pos=4,xpd=NA)
             
             if(scenario==4){
               
@@ -618,12 +624,12 @@ for(sim_value in sim_values)
               
               plot.graph(adj,l,opin,inform,atten,CD,title="",shape,c.title)
               par(mar=c(0,0,0,0))
-              plot(c(0,1),c(0,1),type='N',axes=FALSE,ann=FALSE)
-              text(0,.3,sub1,cex=.9,pos=4,family='mono')
+              plot(c(0,1),c(0,1),type='n',axes=FALSE,ann=FALSE)
+              text(-.1,.3,sub1,cex=1.2,pos=4,xpd=NA)
               plot.histo(-opin[(1+(N/2)):N],min.o,max.o,'O')
               par(mar=c(0,0,0,0))
-              plot(c(0,1),c(0,1),type='N',axes=FALSE,ann=FALSE)
-              text(0,.3,sub,cex=.9,pos=4,family='mono')
+              plot(c(0,1),c(0,1),type='n',axes=FALSE,ann=FALSE)
+              text(-.1,.3,sub,cex=1.2,pos=4,xpd=NA)
               plot.histo(-opin[1:(N/2)],min.o,max.o,'O')
             }  
             
@@ -650,7 +656,7 @@ for(sim_value in sim_values)
       
       # cusp fig plot in scenario 3
       if(scenario==3 & pdfplot) 
-      {cuspfig <- readPNG('figure7.png')
+      {cuspfig <- readPNG('figures/figure7.png')
       plot(c(0,1),c(0,1), type='n', main="", xlab="", ylab="",axes=F)
       par(mar=c(0,0,0,0))
       rasterImage(cuspfig, .05,-.05, .9,1.05)
@@ -672,7 +678,9 @@ for(sim_value in sim_values)
 
 if(scenario==31)
 {
-  save(datasim,file='datasim_sc31')
+  #save(datasim,file='datasim_sc31')
+  load('figures/datasim_sc31_org')
+  sim_var=c('d_A');sim_var2=c('r_min'); sim_var3=c('network')
   mean_sim=as.matrix(aggregate(datasim[,4:7],list(datasim[,1],datasim[,2],datasim[,3]),mean,na.rm=T))
   colnames(mean_sim)=c(sim_var,sim_var2,sim_var3,c('p(O>0)','SD(O)','Hartigan D','Assortativity'))
   mean_sim2=as_tibble(mean_sim)
@@ -688,31 +696,34 @@ if(scenario==31)
   ggplot(data = mean_sim3) + 
     geom_point(mapping = aes(x = d_A, y = value,color = r_min),size=1.2)+
     geom_line(mapping = aes(x = d_A, y = value,color = r_min),size=.5)+
-    facet_wrap(network~measure,scales="free", dir = "h")+
-    scale_color_grey() + theme_classic()+ xlab(expression('d'['A']))+ylab('')+
+    facet_wrap(~network+measure,scales="free")+
+    scale_color_grey(start = 0, end = .8) + theme_minimal()+ xlab(expression('d'['A']))+ylab('')+
     guides(color = guide_legend(reverse = TRUE))+
-    theme(strip.background = element_rect(fill=NA,colour = NA))+
-    theme(strip.text.x = element_text(size = 12))+
-    theme(strip.text.x = element_text(margin = margin(1, 0, 1, 0)))+
-    labs(color = expression('r'['min']))
+    theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
+    theme(strip.text.x = element_text( face = "bold"))+
+    labs(color = expression('r'['min']))+
+    theme(panel.spacing = unit(1, "cm"))
   
   
   ggplot(data = mean_sim3) + 
     geom_point(mapping = aes(x = d_A, y = value,color = r_min),size=1.2)+
     geom_line(mapping = aes(x = d_A, y = value,color = r_min),size=.5)+
-    facet_wrap(network~measure,scales="free", dir = "h")+
-    scale_colour_hue() + theme_classic()+ xlab(expression('d'['A']))+ylab('')+
+    facet_wrap(~network+measure,scales="free")+
+    scale_colour_hue(h = c(90, 360)) + theme_grey()+ xlab(expression('d'['A']))+ylab('')+
     guides(color = guide_legend(reverse = TRUE))+
-    theme(strip.background = element_rect(fill=NA,colour = NA))+
-    theme(strip.text.x = element_text(size = 12))+
-    theme(strip.text.x = element_text(margin = margin(1, 0, 1, 0)))+
-    labs(color = expression('r'['min']))
+    theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
+    theme(strip.text.x = element_text( face = "bold"))+
+    labs(color = expression('r'['min']))+
+    theme(panel.spacing = unit(1, "cm"))
+
   dev.off()
 }
 
 if(scenario==41)
 {
-  save(datasim,file='datasim_sc41')
+  #save(datasim,file='datasim_sc41')
+  load('figures/datasim_sc41_org')
+  sim_var=c('p(pertubation)');sim_var2=c('t_d');sim_var3=c('network')
   mean_sim=as.matrix(aggregate(datasim[,4:7],list(datasim[,1],datasim[,2],datasim[,3]),mean,na.rm=T))
   colnames(mean_sim)=c('p_perturbation',sim_var2,sim_var3,c('p(O>0)','SD(O)','Hartigan D','Assortativity'))
   mean_sim2=as_tibble(mean_sim)
@@ -731,23 +742,27 @@ if(scenario==41)
     geom_point(mapping = aes(x = p_perturbation, y = value,color = t_d),size=1.2)+
     geom_line(mapping = aes(x = p_perturbation, y = value,color = t_d),size=.5)+
     facet_wrap(network~measure,scales="free", dir = "h")+
-    scale_color_grey() + theme_classic()+ xlab('p(pertubation)')+ylab('')+
+    scale_color_grey(start = 0, end = .8) + theme_minimal()+ xlab('p(pertubation)')+ylab('')+
     guides(color = guide_legend(reverse = TRUE))+
-    theme(strip.background = element_rect(fill=NA,colour = NA))+
-    theme(strip.text.x = element_text(size = 12))+
-    theme(strip.text.x = element_text(margin = margin(2, 2, 2, 0)))+
-    labs(color = expression('t'['O']))
+    theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
+    theme(strip.text.x = element_text( face = "bold"))+
+    labs(color = expression('t'['O']))+
+    theme(panel.spacing = unit(1, "cm"))
+  
+ 
   
   ggplot(data = mean_sim3) + 
     geom_point(mapping = aes(x = p_perturbation, y = value,color = t_d),size=1.2)+
     geom_line(mapping = aes(x = p_perturbation, y = value,color = t_d),size=.5)+
     facet_wrap(network~measure,scales="free", dir = "h")+
-    scale_colour_hue() + theme_classic()+ xlab('p(pertubation)')+ylab('')+
+    scale_colour_hue(h = c(90, 360)) + theme_grey()+ xlab('p(pertubation)')+ylab('')+
     guides(color = guide_legend(reverse = TRUE))+
-    theme(strip.background = element_rect(fill=NA,colour = NA))+
-    theme(strip.text.x = element_text(size = 14))+
-    theme(strip.text.x = element_text(margin = margin(1, 0, 1, 0)))+
-    labs(color = expression('t'['O']))
+    theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
+    theme(strip.text.x = element_text( face = "bold"))+
+    labs(color = expression('t'['O']))+
+    theme(panel.spacing = unit(1, "cm"))
+    
+  
   dev.off()
   
 }
