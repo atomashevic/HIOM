@@ -1,12 +1,9 @@
 library(igraph)
 library(colorspace)
-# library(svMisc)
 library(ggplot2)
-# library(Hmisc)
 library(diptest)
 library(png)
 library(qgraph)
-# library(Rmisc) 
 library(tidyverse)
 
 hartigan_d= function(x)
@@ -124,7 +121,7 @@ scenario=3  # set scenario
 
 pdfplot=F # if TRUE to plot to pdf files used for manuscript figures
 
-PNG=T # save png for gif
+PNG=F # save png for gif
 if(PNG) unlink(paste0("figures/pngplots_",scenario,"/*"))
 
 #layout for plots
@@ -257,6 +254,8 @@ for(sim_value in sim_values)
         
         N=400
         social_network='SBM'
+        social_network='lattice'
+        
         network=make_network(social_network,N=N,clusters=10,p_within=.2,p_between=.001,rewiring=.02)
         g=network[[1]];l=network[[2]];adj=network[[3]]
         
@@ -436,8 +435,9 @@ for(sim_value in sim_values)
       }
       
       # collect data in
-      if(!simulation) data=matrix(NA,Ni/200,25) else data=matrix(NA,20,25) 
-      
+          freq_data_store=1
+          if(!simulation) data=matrix(NA,Ni/freq_data_store,25) else data=matrix(NA,20,25) 
+       
       layout(layout.m,heights=heights)
       
       ######################################
@@ -464,6 +464,8 @@ for(sim_value in sim_values)
           neighb=m_neigh[agent,][!is.na(m_neigh[agent,])]
           if(length(neighb>0))  partner=sample(neighb,1) else partner=0
         } else partner=0
+        
+        partner=sample(1:N,1)
         
         if(iteration>1) # exclude first iteration from updating to get a plot of initial state
         {
@@ -516,7 +518,7 @@ for(sim_value in sim_values)
         }
         
         # reports
-        if(partner!=0&agent!=0 & iteration %% 200==0 & !simulation)  
+        if(partner!=0&agent!=0 & iteration %% freq_data_store==0 & !simulation)  
         {
           CD=27*information^2-4*(attention+min_attention)^3 # Cardan's discriminant
           CD_p=sum(CD<0)/N
@@ -525,7 +527,7 @@ for(sim_value in sim_values)
           ambivalence_r=cor(opinion,information)
           dip=dip(opinion)
           
-          data[iteration/200,]=c(agent,partner,O1,O2,I1,I2,A1,A2,opinion[agent],opinion[partner],
+          data[iteration/freq_data_store,]=c(agent,partner,O1,O2,I1,I2,A1,A2,opinion[agent],opinion[partner],
                                  information[agent], information[partner],attention[agent],
                                  attention[partner],
                                  CD_p,ambivalence_r,freq_pos_opinion,
@@ -778,6 +780,7 @@ legend('topright',col=1:7,lty=1:7,legend=c('in bifurcation set','ambivalence',
 axis(2)
 axis(1)
 
+# make gif if PGN = TRUE
 if(PNG)
 {
   library(dplyr)
@@ -792,25 +795,4 @@ if(PNG)
   
 }
 
-# install.packages('plotly')
-# library(plotly)
-# 
-# plot_ly(x = ~as.vector(information), y = ~as.vector(attention), z = ~as.vector(opinion),
-#              marker = list(size=1+attention*4,color = ~as.vector(-opinion), 
-#              colorscale = c('#FF0000FF', '#FFFFFDFF'), showscale = TRUE)) %>%
-#   add_markers() %>%
-#   layout(scene = list(xaxis = list(title = 'Information'),
-#                       yaxis = list(title = 'Attention'),
-#                       zaxis = list(title = 'Opinion')),
-#          annotations = list(
-#            x = 1.13,
-#            y = 1.05,
-#            text = 'Polarization',
-#            xref = 'paper',
-#            yref = 'paper',
-#            showarrow = FALSE
-#          ))
-# 
-# library(cusp)
-# ?cusp
-# ?cusp3d.surface
+

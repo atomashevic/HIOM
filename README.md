@@ -8,9 +8,11 @@ Polarization of opinions is a societal threat. It involves psychological process
 How to run
 ----------
 Run code in Rstudio
-Install packages specified in  HIOM_SW.r
+Install packages specified in the fitst lines of HIOM_SW.r
+add a directory figures in the directory of HIOM_SW.r
 
 Main simulation is HIOM_SW.r (figures 4,5,6,7,8)
+set pdfplot=F; PBG=F; scenario 3 to get the figure above.
 
 figures2&3.r produces figure 2 and 3
 
