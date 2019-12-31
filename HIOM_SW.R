@@ -1,3 +1,5 @@
+rm(list=ls())
+
 library(igraph)
 library(colorspace)
 library(ggplot2)
@@ -115,9 +117,9 @@ scenario=3  # set scenario
 # scenario 1: removed from manuscript
 # scenario 2 : figure 4
 # scenario 3 : figure 5
-# scenario 31 : figure 6
+# scenario 31 : figure 6 (warning: takes hours)
 # scenario 4 : figure 7
-# scenario 41 : figure 8
+# scenario 41 : figure 8 (warning: takes hours)
 
 pdfplot=F # if TRUE to plot to pdf files used for manuscript figures
 
@@ -316,14 +318,12 @@ for(sim_value in sim_values)
         delta_attention= sim_value
         r_min= sim_value2
         
-        
         # all slighty positive low attention
         information = rnorm(N, .1, 0)
         attention = runif(N, .0, .0)
         opinion=rnorm(N,0,.01)
         for( i in 1:500) opinion=stoch_cusp(N,opinion,attention+min_attention,
                                             information,s_O,maxwell_convention)
-        
         # except for some negative high attention persons (activists)
         m=rep(0,N)
         m[seq(1,N,N/3)[-1]-1]=1
@@ -333,6 +333,7 @@ for(sim_value in sim_values)
         activism_on_at_iteration=300    
         
         plot_iteration=c(1,Ni)
+        plot_iteration=c(1,Ni)=NA
       }
       
       if(scenario==4) # Meat eating vegies
@@ -680,8 +681,8 @@ for(sim_value in sim_values)
 
 if(scenario==31)
 {
-  #save(datasim,file='datasim_sc31')
-  load('figures/datasim_sc31_org')
+  save(datasim,file='figures/datasim_sc31')
+  #load('figures/datasim_sc31_org')
   sim_var=c('d_A');sim_var2=c('r_min'); sim_var3=c('network')
   mean_sim=as.matrix(aggregate(datasim[,4:7],list(datasim[,1],datasim[,2],datasim[,3]),mean,na.rm=T))
   colnames(mean_sim)=c(sim_var,sim_var2,sim_var3,c('p(O>0)','SD(O)','Hartigan D','Assortativity'))
@@ -695,7 +696,7 @@ if(scenario==31)
   mean_sim3$measure=factor(mean_sim3$measure, levels=c('p(O>0)','Hartigan D'))
   
   pdf('figures/figure6.pdf')
-  ggplot(data = mean_sim3) + 
+  print(ggplot(data = mean_sim3) + 
     geom_point(mapping = aes(x = d_A, y = value,color = r_min),size=1.2)+
     geom_line(mapping = aes(x = d_A, y = value,color = r_min),size=.5)+
     facet_wrap(~network+measure,scales="free")+
@@ -704,10 +705,10 @@ if(scenario==31)
     theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
     theme(strip.text.x = element_text( face = "bold"))+
     labs(color = expression('r'['min']))+
-    theme(panel.spacing = unit(1, "cm"))
+    theme(panel.spacing = unit(1, "cm")))
   
   
-  ggplot(data = mean_sim3) + 
+  print(ggplot(data = mean_sim3) + 
     geom_point(mapping = aes(x = d_A, y = value,color = r_min),size=1.2)+
     geom_line(mapping = aes(x = d_A, y = value,color = r_min),size=.5)+
     facet_wrap(~network+measure,scales="free")+
@@ -716,15 +717,15 @@ if(scenario==31)
     theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
     theme(strip.text.x = element_text( face = "bold"))+
     labs(color = expression('r'['min']))+
-    theme(panel.spacing = unit(1, "cm"))
+    theme(panel.spacing = unit(1, "cm")))
 
   dev.off()
 }
 
 if(scenario==41)
 {
-  #save(datasim,file='datasim_sc41')
-  load('figures/datasim_sc41_org')
+  save(datasim,file='figures/datasim_sc41')
+  #load('figures/datasim_sc41_org')
   sim_var=c('p(pertubation)');sim_var2=c('t_d');sim_var3=c('network')
   mean_sim=as.matrix(aggregate(datasim[,4:7],list(datasim[,1],datasim[,2],datasim[,3]),mean,na.rm=T))
   colnames(mean_sim)=c('p_perturbation',sim_var2,sim_var3,c('p(O>0)','SD(O)','Hartigan D','Assortativity'))
@@ -740,7 +741,7 @@ if(scenario==41)
 
   pdf('figures/figure8.pdf')
   scaleFUN <- function(x) sprintf("%.4f", x)
-  ggplot(data = mean_sim3) + 
+  print(ggplot(data = mean_sim3) + 
     geom_point(mapping = aes(x = p_perturbation, y = value,color = t_d),size=1.2)+
     geom_line(mapping = aes(x = p_perturbation, y = value,color = t_d),size=.5)+
     facet_wrap(network~measure,scales="free", dir = "h")+
@@ -749,11 +750,9 @@ if(scenario==41)
     theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
     theme(strip.text.x = element_text( face = "bold"))+
     labs(color = expression('t'['O']))+
-    theme(panel.spacing = unit(1, "cm"))
-  
- 
-  
-  ggplot(data = mean_sim3) + 
+    theme(panel.spacing = unit(1, "cm")))
+
+  print(ggplot(data = mean_sim3) + 
     geom_point(mapping = aes(x = p_perturbation, y = value,color = t_d),size=1.2)+
     geom_line(mapping = aes(x = p_perturbation, y = value,color = t_d),size=.5)+
     facet_wrap(network~measure,scales="free", dir = "h")+
@@ -762,11 +761,9 @@ if(scenario==41)
     theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
     theme(strip.text.x = element_text( face = "bold"))+
     labs(color = expression('t'['O']))+
-    theme(panel.spacing = unit(1, "cm"))
-    
+    theme(panel.spacing = unit(1, "cm")))
   
   dev.off()
-  
 }
 
 layout(1:3)
