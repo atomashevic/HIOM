@@ -14,17 +14,17 @@ add a directory figures in the directory of HIOM_SW.r
 
 Main simulation is HIOM_SW.r (figures 4,5,6,7,8)
 
-set pdfplot=F; PNG=F; scenario 3 to get the figure above.
+set pdfplot=F; PNG=F; scenario=3 to get the figure above.
 
-set pdfplot=T; PNG=F; scenario 2 to get figure 4.
+set pdfplot=T; PNG=F; scenario=2 to get figure 4.
 
-set pdfplot=T; PNG=F; scenario 3 to get figure 5.
+set pdfplot=T; PNG=F; scenario=3 to get figure 5.
 
-set pdfplot=F; PNG=F; scenario 31 to get figure 6.
+set pdfplot=F; PNG=F; scenario=31 to get figure 6.
 
-set pdfplot=T; PNG=F; scenario 4 to get figure 7.
+set pdfplot=T; PNG=F; scenario=4 to get figure 7.
 
-set pdfplot=F; PNG=F; scenario 41 to get figure 8.
+set pdfplot=F; PNG=F; scenario=41 to get figure 8.
 
 
 
