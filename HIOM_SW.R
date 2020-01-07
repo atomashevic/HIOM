@@ -242,7 +242,7 @@ for(sim_value in sim_values)
       if(scenario==3)
       {
         Ni= 15000 #25000 # max iterations
-        if(pdfplot) 
+        if(pdfplot)  
         {
           set.seed(12);
           pdfname='figures/figure5.pdf'
