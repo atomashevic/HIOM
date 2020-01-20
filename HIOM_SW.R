@@ -466,7 +466,6 @@ for(sim_value in sim_values)
           if(length(neighb>0))  partner=sample(neighb,1) else partner=0
         } else partner=0
         
-        partner=sample(1:N,1)
         if(partner!=0&agent!=0 ) 
         {
           I1=information[agent];A1=attention[agent];  O1=opinion[agent];
