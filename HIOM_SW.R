@@ -112,7 +112,7 @@ plot.histo= function(x,min,max,xlab='')
 
 ##############
 
-scenario=3  # set scenario
+scenario=2  # set scenario
 
 # scenario 1: removed from manuscript
 # scenario 2 : figure 4
@@ -256,7 +256,7 @@ for(sim_value in sim_values)
         
         N=400
         social_network='SBM'
-        social_network='lattice'
+       # social_network='lattice'
         
         network=make_network(social_network,N=N,clusters=10,p_within=.2,p_between=.001,rewiring=.02)
         g=network[[1]];l=network[[2]];adj=network[[3]]
@@ -467,14 +467,17 @@ for(sim_value in sim_values)
         } else partner=0
         
         partner=sample(1:N,1)
+        if(partner!=0&agent!=0 ) 
+        {
+          I1=information[agent];A1=attention[agent];  O1=opinion[agent];
+          I2=information[partner];A2=attention[partner];O2=opinion[partner]
+        }
         
         if(iteration>1) # exclude first iteration from updating to get a plot of initial state
         {
           ### information update for interacting agents
           if(partner!=0&agent!=0 ) 
           {
-            I1=information[agent];A1=attention[agent];  O1=opinion[agent];
-            I2=information[partner];A2=attention[partner];O2=opinion[partner]
             
             if( abs(O1-O2) < deffuant_c) # bounded confidence check
             {
