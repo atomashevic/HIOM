@@ -112,7 +112,7 @@ plot.histo= function(x,min,max,xlab='')
 
 ##############
 
-scenario=2  # set scenario
+scenario=4  # set scenario
 
 # scenario 1: removed from manuscript
 # scenario 2 : figure 4
@@ -121,7 +121,8 @@ scenario=2  # set scenario
 # scenario 4 : figure 7
 # scenario 41 : figure 8 (warning: takes hours)
 
-pdfplot=F # if TRUE to plot to pdf files used for manuscript figures
+pdfplot=T # if TRUE to plot to pdf files used for manuscript figures
+plottype='tiff'
 
 PNG=F # save png for gif
 if(PNG) unlink(paste0("figures/pngplots_",scenario,"/*"))
@@ -206,8 +207,16 @@ for(sim_value in sim_values)
         if(pdfplot)
         { 
           set.seed(1);
-          pdfname='figures/figure4.pdf'
-          pdf(pdfname,h=8,w=11);
+          if(plottype=='pdf'){
+            pdfname='figures/figure4.pdf'
+            pdf(pdfname,h=8,w=11);
+          }
+          if(plottype=='tiff'){
+            pdfname='figures/figure4.tiff'
+            dpi=300
+            tiff(pdfname,h=8,w=11,res=dpi,units = "in");
+          }
+      
           layout.m=cbind(layout.basis,layout.basis+4*(layout.basis>0));
           layout.m=rbind(layout.m,layout.m+8*(layout.m>0))
           heights=c(3,1,3,1)
@@ -245,8 +254,16 @@ for(sim_value in sim_values)
         if(pdfplot)  
         {
           set.seed(12);
-          pdfname='figures/figure5.pdf'
-          pdf(pdfname,paper='a4r',h=8,w=11);
+          if(plottype=='pdf'){
+            pdfname='figures/figure5.pdf'
+            pdf(pdfname,paper='a4r',h=8,w=12);
+          }
+          if(plottype=='tiff'){
+            pdfname='figures/figure5.tiff'
+            dpi=300
+            tiff(pdfname,h=8,w=11,res=dpi,units = "in");
+          }
+          
           layout.m=cbind(layout.basis,layout.basis+4*(layout.basis>0));
           layout.m=rbind(layout.m,layout.m+8*(layout.m>0))
           layout.m[3:4,9:16]=13
@@ -342,8 +359,15 @@ for(sim_value in sim_values)
         if(pdfplot) 
         {
           set.seed(3);
-          pdfname='figures/figure7.pdf'
-          pdf(pdfname,h=8,w=11,paper='a4r'); 
+          if(plottype=='pdf'){
+           pdfname='figures/figure7.pdf'
+           pdf(pdfname,h=8,w=11,paper='a4r');
+          }
+          if(plottype=='tiff'){
+            pdfname='figures/figure7.tiff'
+            dpi=300
+            tiff(pdfname,h=8,w=11,res=dpi,units = "in");
+          }
           layout.m=layout.m=cbind(layout.m,layout.m+5)
           plot_iteration=c(1,Ni) 
         }
@@ -603,7 +627,7 @@ for(sim_value in sim_values)
             if(scenario %in% c(2,3)) 
             {
               plot.graph(adj,l,opin,inform,atten,CD,title,shape,c.title)
-              if(scenario==3) text(14,-14,sub,cex=1.2,pos=4,xpd=NA)
+              if(scenario==3) text(9,-16,sub,cex=1.2,pos=4,xpd=NA)
               
               plot.histo(-opin,min.o,max.o,'O')
               plot.histo(-inform,min.i,max.i,'I')
@@ -630,11 +654,11 @@ for(sim_value in sim_values)
               plot.graph(adj,l,opin,inform,atten,CD,title="",shape,c.title)
               par(mar=c(0,0,0,0))
               plot(c(0,1),c(0,1),type='n',axes=FALSE,ann=FALSE)
-              text(-.1,.3,sub1,cex=1.2,pos=4,xpd=NA)
+              text(-.22,.3,sub1,cex=1.2,pos=4,xpd=NA)
               plot.histo(-opin[(1+(N/2)):N],min.o,max.o,'O')
               par(mar=c(0,0,0,0))
               plot(c(0,1),c(0,1),type='n',axes=FALSE,ann=FALSE)
-              text(-.1,.3,sub,cex=1.2,pos=4,xpd=NA)
+              text(-.22,.3,sub,cex=1.2,pos=4,xpd=NA)
               plot.histo(-opin[1:(N/2)],min.o,max.o,'O')
             }  
             
@@ -683,85 +707,72 @@ for(sim_value in sim_values)
 
 if(scenario==31)
 {
-  save(datasim,file='figures/datasim_sc31')
-  #load('figures/datasim_sc31_org')
+#  save(datasim,file='figures/datasim_sc31')
+  load('figures/datasim_sc31_org')
   sim_var=c('d_A');sim_var2=c('r_min'); sim_var3=c('network')
   mean_sim=as.matrix(aggregate(datasim[,4:7],list(datasim[,1],datasim[,2],datasim[,3]),mean,na.rm=T))
   colnames(mean_sim)=c(sim_var,sim_var2,sim_var3,c('p(O>0)','SD(O)','Hartigan D','Assortativity'))
   mean_sim2=as_tibble(mean_sim)
   mean_sim2$r_min=as.factor(mean_sim2$r_min)
-  mean_sim2$network[mean_sim2$network==1]='Stoch. block model'
+  mean_sim2$network[mean_sim2$network==1]='Stoch. block network'
   mean_sim2$network[mean_sim2$network==2]='Lattice network'
-  mean_sim2$network=factor(mean_sim2$network, levels=c('Stoch. block model','Lattice network'))
+  mean_sim2$network=factor(mean_sim2$network, levels=c('Stoch. block network','Lattice network'))
   mean_sim3 = mean_sim2 %>%
     gather('p(O>0)','Hartigan D', key = measure, value = value)
   mean_sim3$measure=factor(mean_sim3$measure, levels=c('p(O>0)','Hartigan D'))
   
-  pdf('figures/figure6.pdf')
+  if(plottype=='pdf')pdf('figures/figure6.pdf')
+  if(plottype=='tiff'){
+  dpi=300
+  tiff('figures/figure6.tiff',h=6,w=6,res=dpi,units = "in")
+  }
   print(ggplot(data = mean_sim3) + 
-    geom_point(mapping = aes(x = d_A, y = value,color = r_min),size=1.2)+
-    geom_line(mapping = aes(x = d_A, y = value,color = r_min),size=.5)+
-    facet_wrap(~network+measure,scales="free")+
-    scale_color_grey(start = 0, end = .8) + theme_minimal()+ xlab(expression('d'['A']))+ylab('')+
-    guides(color = guide_legend(reverse = TRUE))+
-    theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
-    theme(strip.text.x = element_text( face = "bold"))+
-    labs(color = expression('r'['min']))+
-    theme(panel.spacing = unit(1, "cm")))
+          geom_point(mapping = aes(x = d_A, y = value,color = r_min),size=1.2)+
+          geom_line(mapping = aes(x = d_A, y = value,color = r_min),size=.5)+
+          facet_grid(measure~network,scales="free",switch='y')+
+          scale_colour_hue(h = c(90, 360)) + theme_grey()+ xlab(expression('d'['A']))+ylab('')+
+          guides(color = guide_legend(reverse = TRUE))+
+          theme(strip.text.x = element_text( face = "bold", size=12))+
+          theme(strip.text.y = element_text( size=11),strip.background = element_blank(),strip.placement = "outside")+
+          labs(color = expression('r'['min']))+
+          theme(panel.spacing = unit(1, "cm")))
   
-  
-  print(ggplot(data = mean_sim3) + 
-    geom_point(mapping = aes(x = d_A, y = value,color = r_min),size=1.2)+
-    geom_line(mapping = aes(x = d_A, y = value,color = r_min),size=.5)+
-    facet_wrap(~network+measure,scales="free")+
-    scale_colour_hue(h = c(90, 360)) + theme_grey()+ xlab(expression('d'['A']))+ylab('')+
-    guides(color = guide_legend(reverse = TRUE))+
-    theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
-    theme(strip.text.x = element_text( face = "bold"))+
-    labs(color = expression('r'['min']))+
-    theme(panel.spacing = unit(1, "cm")))
-
   dev.off()
 }
 
 if(scenario==41)
 {
-  save(datasim,file='figures/datasim_sc41')
-  #load('figures/datasim_sc41_org')
+  #save(datasim,file='figures/datasim_sc41')
+  load('figures/datasim_sc41_org')
   sim_var=c('p(pertubation)');sim_var2=c('t_d');sim_var3=c('network')
   mean_sim=as.matrix(aggregate(datasim[,4:7],list(datasim[,1],datasim[,2],datasim[,3]),mean,na.rm=T))
   colnames(mean_sim)=c('p_perturbation',sim_var2,sim_var3,c('p(O>0)','SD(O)','Hartigan D','Assortativity'))
   mean_sim2=as_tibble(mean_sim)
   mean_sim2$t_d=as.factor(mean_sim2$t_d)
-  mean_sim2$network[mean_sim2$network==1]='Stoch. block model'
+  mean_sim2$network[mean_sim2$network==1]='Stoch. block network'
   mean_sim2$network[mean_sim2$network==2]='Lattice network'
-  mean_sim2$network=factor(mean_sim2$network, levels=c('Stoch. block model','Lattice network'))
+  mean_sim2$network=factor(mean_sim2$network, levels=c('Stoch. block network','Lattice network'))
   
   mean_sim3 = mean_sim2 %>%
     gather('p(O>0)','Hartigan D', key = measure, value = value)
   mean_sim3$measure=factor(mean_sim3$measure, levels=c('p(O>0)','Hartigan D'))
 
-  pdf('figures/figure8.pdf')
+  if(plottype=='pdf') pdf('figures/figure8.pdf')
+  if(plottype=='tiff'){
+    dpi=300
+    tiff('figures/figure8.tiff',units="in",h=6,w=6,res=dpi)
+  }
+  
   scaleFUN <- function(x) sprintf("%.4f", x)
-  print(ggplot(data = mean_sim3) + 
-    geom_point(mapping = aes(x = p_perturbation, y = value,color = t_d),size=1.2)+
-    geom_line(mapping = aes(x = p_perturbation, y = value,color = t_d),size=.5)+
-    facet_wrap(network~measure,scales="free", dir = "h")+
-    scale_color_grey(start = 0, end = .8) + theme_minimal()+ xlab('p(pertubation)')+ylab('')+
-    guides(color = guide_legend(reverse = TRUE))+
-    theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
-    theme(strip.text.x = element_text( face = "bold"))+
-    labs(color = expression('t'['O']))+
-    theme(panel.spacing = unit(1, "cm")))
 
-  print(ggplot(data = mean_sim3) + 
-    geom_point(mapping = aes(x = p_perturbation, y = value,color = t_d),size=1.2)+
-    geom_line(mapping = aes(x = p_perturbation, y = value,color = t_d),size=.5)+
-    facet_wrap(network~measure,scales="free", dir = "h")+
+  print(ggplot(data = mean_sim3,aes(x = p_perturbation, y = value,color = t_d)) + 
+    geom_point(size=1.2)+
+    geom_line(size=.5)+
+    facet_grid(measure~network,scales="free",switch='y')+
     scale_colour_hue(h = c(90, 360)) + theme_grey()+ xlab('p(pertubation)')+ylab('')+
     guides(color = guide_legend(reverse = TRUE))+
-    theme(strip.text.x = element_text(margin = margin(1,0,2, 0)))+
-    theme(strip.text.x = element_text( face = "bold"))+
+    theme(strip.text.x = element_text( face = "bold",size=12))+
+    theme(strip.text.y = element_text( size=11),strip.background = element_blank(),strip.placement = "outside")+
     labs(color = expression('t'['O']))+
     theme(panel.spacing = unit(1, "cm")))
   

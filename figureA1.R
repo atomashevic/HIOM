@@ -27,12 +27,14 @@ for (j in 1:iterations)
   list(x,w)
 }
 
-pdf('figures/figureA1.pdf')
+#pdf('figures/figureA1.pdf')
+#dpi=300
+tiff("figures/figureA1.tiff",height=7,width=5,res=dpi,units='in')
+
 
 # Simulation
 
-layout(matrix(c(1:28),7,4,byrow=T),heights = c(1,1,1,1,1,1.4))
-layout(matrix(c(1:21),7,3,byrow=T),heights = c(1,1,1,1,1,1.4))
+layout(matrix(c(1:18),6,3,byrow=T),heights = c(1,1,1,1,1,1.4))
 n=40 # 40 nodes
 iterations=500 # 500 # interations
 m=200 #200
@@ -108,11 +110,11 @@ mint=min(t-.1,-.5,na.rm=T)
 maxw=max(ww+.1,.5,na.rm=T)
 maxt=max(t+.1,.5,na.rm=T)
 
-if(pl<6) par(mar=c(1.5,4.5,1.5,1)) else par(mar=c(4,4.5,1.5,1))
+if(pl<6) par(mar=c(1.5,2.5,1.5,2)) else par(mar=c(5,2.5,1.5,2))
 
 
 if(pl==6) xlab=expression(omega) else xlab=''
-hist(ww,breaks=seq(minw,maxw,.05),xlim=c(minw,maxw),col='grey',main='',xlab=xlab,ylab='',freq=F,axes=F)
+hist(ww,breaks=seq(minw,maxw,.05),xlim=c(minw,maxw),col='grey',main='',xlab=xlab,ylab='',freq=F,axes=F,cex.lab=1.2)
 axis(1)
 # if(pl==6) xlab=expression(tau) else xlab=''
 # hist(t,breaks=seq(mint,maxt,.05),col='grey',xlim=c(mint,maxt),main='',ylab='',xlab=xlab,freq=F,axes=F)
@@ -128,7 +130,7 @@ x=sample(c(-1,1),n,T)
 data[i]=sum(glauber(n,beta,t,w,x,iterations)[[1]])
 }
 if(pl==6) xlab='A' else xlab=''
-plot(data~betas,type='p',xlab=xlab,ylab=expression(sum(X)),bty='n',pch=20)
+plot(data~betas,type='p',xlab=xlab,ylab=expression(sum(X)),bty='n',pch=20,cex.lab=1.2,cex.axis=.9)
 
 data=rep(0,m)
 i=0
@@ -145,48 +147,7 @@ for(t_common in tau)
 }
 
 if(pl==6) xlab="I" else xlab=''
-plot(data~tau,type='p',xlab=xlab,ylab=expression(sum(X)),bty='n',pch=20)
+plot(data~tau,type='p',xlab=xlab,ylab=expression(sum(X)),bty='n',pch=20,cex.lab=1.2)
 }
 dev.off()
 
-
-
-# g=graph_from_adjacency_matrix(w, mode = c("undirected"),weighted = T)
-# plot(g)
-# is.connected(g)
-# components(g)
-# sgc <- spinglass.community(g)
-# sgc$membership
-
-p_missing_link=0
-mw=0
-mt=0
-sdw=0.1
-sdt=0
-sym=F
-
-beta=1
-plot=T
-learning=T
-n=10 # 40 nodes
-iterations=5000 # 500 # interations
-x=sample(c(-1,1),n,T)
-w=matrix(rnorm(n*n,mw,sdw),n,n) # biased weights
-w=(1-diag(n))*w
-if(sym) w[lower.tri(w)] = t(w)[lower.tri(w)]
-wm=matrix(sample(0:1,n*n,T,prob=c(p_missing_link,1-p_missing_link)),n,n)
-w=wm*w
-t=matrix(rnorm(n*n,mt,sdt),n,n) #tresholds
-
-g=glauber(n,beta,t,w,x,iterations,plot,F)
-g=glauber(n,beta,t,w,x,iterations,plot,T)
-
-x=g[[1]]
-w=g[[2]]
-
-if(all(x*t(x*sign(w))>=0) & sd(x)>0) 
-{
-  w=x*t(x*w)
-  t=x*t
-  x=x*x
-} 

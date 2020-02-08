@@ -16,7 +16,9 @@ for(i in 2:n)
 o
 }
 
-pdf("figures/figure2.pdf",h=6,w=12)
+#pdf("figures/figure2.pdf",h=6,w=12)
+dpi=300
+tiff("figures/figure2.tiff",h=4,w=10,res=dpi,units='in')
 layout(matrix(1:2,1,2))
 set.seed(10)
 dt=.15
@@ -48,7 +50,10 @@ dev.off()
 
 
 
-pdf('figures/figure3.pdf',h=4,w=8)  # Dynamics of involvement
+#pdf('figures/figure3.pdf',h=4,w=8)  # Dynamics of involvement
+dpi=300
+tiff("figures/figure3.tiff",h=4,w=8,res=dpi,units='in')
+
 set.seed(6)
 layout(matrix(1:2,1,2))
 n=200
